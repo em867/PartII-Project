@@ -1,0 +1,28 @@
+% Initialize an empty mega structure
+mega_dimensions = struct();
+
+% Define the names of the structures for each day
+structure_names = {'averaged_dimensions_09_02','averaged_dimensions_12_02', 'averaged_dimensions_13_02','averaged_dimensions_14_02','averaged_dimensions_14_03','averaged_dimensions_15_03', 'averaged_dimensions_16_02','averaged_dimensions_16_03','averaged_dimensions_17_02','averaged_dimensions_18_02','averaged_dimensions_18_03','averaged_dimensions_19_02','averaged_dimensions_19_03','averaged_dimensions_20_02', 'averaged_dimensions_20_03', 'averaged_dimensions_21_03', 'averaged_dimensions_26_03', 'averaged_dimensions_27_03', 'averaged_dimensions_28_03', 'averaged_dimensions_29_03'};
+
+% Loop over each structure for each day
+for day = 1:numel(structure_names)
+    % Get the structure for the current day
+    current_structure = eval(structure_names{day});
+    
+    % Loop over each dimension in the current structure
+    for dim = fieldnames(current_structure)'
+        dim_name = char(dim);
+        % Check if the dimension already exists in the mega structure
+        if isfield(mega_dimensions, dim_name)
+            % Concatenate the averaged values for the current dimension
+            mega_dimensions.(dim_name) = [mega_dimensions.(dim_name); current_structure.(dim_name)];
+        else
+            % Create a new field for the dimension and assign the averaged values
+            mega_dimensions.(dim_name) = current_structure.(dim_name);
+        end
+    end
+end
+
+% Now, 'mega_dimensions' contains all dimensions grouped across different days
+
+
