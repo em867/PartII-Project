@@ -1,0 +1,144 @@
+% HISTOGRAM OF NORMAL DISTRIBUTION %
+
+% Define the fields of interest and their corresponding names
+fields_of_interest = {'wakefulness', 'boredom', 'effort', 'attention', ...
+    'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', ...
+    'rumination', 'stress'};
+dimension_names = {'Wakefulness', 'Boredom', 'Effort', 'Attention', ...
+    'Body', 'Sensory Seeking', 'Physical Tension', 'Scenario Anxiety', ...
+    'Rumination', 'Stress'};
+
+% Loop over each field and plot histograms
+figure;
+for i = 1:numel(fields_of_interest)
+    field_name = fields_of_interest{i};
+    data = mega_dimensions.(field_name)(:); % Flatten the data into a vector
+    
+    % Plot histogram
+    subplot(2, 5, i); % Adjust subplot arrangement as needed
+    histogram(data, 'Normalization', 'probability');
+    title(dimension_names{i}); % Use the corresponding dimension name
+end
+
+
+
+
+% HISTOGRAM OF NORMAL DISTRIBUTION %
+
+% Define the fields of interest
+fields_of_interest = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Corresponding names for the fields of interest
+dimension_names = {'Wakefulness', 'Boredom', 'Effort', 'Attention', 'Body', 'Sensory Seeking', 'Physical Tension', 'Scenario Anxiety', 'Rumination', 'Stress'};
+
+% Loop over each field and plot histograms
+figure;
+for i = 1:numel(fields_of_interest)
+    field_name = fields_of_interest{i};
+    data = mega_dimensions.(field_name)(:); % Flatten the data into a vector
+    
+    % Plot histogram
+    subplot(2, 5, i); % Adjust subplot arrangement as needed
+    histogram(data, 'Normalization', 'probability');
+    title(dimension_names{i}); % Use the corresponding dimension name
+    xlabel('Value');
+    ylabel('Probability');
+end
+
+
+
+
+
+
+% ONE TEST FOR NORMAL DISTRIBUTION USING THE JARQUE BERA TEST %
+
+% Define the fields of interest
+fields_of_interest = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Loop over each field and perform the Jarque-Bera test
+for i = 1:numel(fields_of_interest)
+    field_name = fields_of_interest{i};
+    data = mega_dimensions.(field_name)(:); % Flatten the data into a vector
+    [~, p] = jbtest(data);
+    
+    % Display the results
+    fprintf('Jarque-Bera test for %s: p-value = %f\n', field_name, p);
+    
+    % Optionally, you can also plot histograms to visually inspect the distribution
+    subplot(2, 5, i); % Adjust subplot arrangement as needed
+    histogram(data);
+    title(field_name);
+end
+
+
+
+
+
+
+% ANDERSON DARLING TEST OF NORMALITY: NORMALITY FOR ALL DIMENSIONS TOGETHER %
+
+
+% Define the fields of interest
+fields_of_interest = {'wakefulness', 'boredom', 'effort', 'attention', ...
+    'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', ...
+    'rumination', 'stress'};
+
+% Perform Anderson-Darling test for each field
+for i = 1:numel(fields_of_interest)
+    field_name = fields_of_interest{i};
+    
+    % Extract data for the current field
+    data = mega_dimensions.(field_name);
+    
+    % Perform Anderson-Darling test
+    [h, p, stat] = adtest(data(:));
+    
+    % Display results
+    fprintf('Anderson-Darling test for %s:\n', field_name);
+    fprintf('   Test statistic: %f\n', stat);
+    fprintf('   p-value: %f\n', p);
+    fprintf('   Null hypothesis (H0) rejection: %d\n', h);
+end
+
+
+
+
+
+% THIS IS THE ONE: ANDERSON DARLING TEST OF NORMALITY: NORMALITY FOR ALL DIMENSIONS INDIVIDUALLY %
+
+
+
+
+% Define the fields of interest
+fields_of_interest = {'wakefulness', 'boredom', 'effort', 'attention', ...
+    'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', ...
+    'rumination', 'stress'};
+
+% Initialize arrays to store results
+test_statistics = zeros(numel(fields_of_interest), 1);
+p_values = zeros(numel(fields_of_interest), 1);
+null_hypothesis_rejection = zeros(numel(fields_of_interest), 1);
+
+% Perform Anderson-Darling test for each field
+for i = 1:numel(fields_of_interest)
+    field_name = fields_of_interest{i};
+    
+    % Extract data for the current field
+    data = mega_dimensions.(field_name);
+    
+    % Perform Anderson-Darling test
+    [h, p, stat] = adtest(data(:));
+    
+    % Store results
+    test_statistics(i) = stat;
+    p_values(i) = p;
+    null_hypothesis_rejection(i) = h;
+end
+
+% Display results for each dimension
+for i = 1:numel(fields_of_interest)
+    fprintf('Anderson-Darling test for %s:\n', fields_of_interest{i});
+    fprintf('   Test statistic: %f\n', test_statistics(i));
+    fprintf('   p-value: %f\n', p_values(i));
+    fprintf('   Null hypothesis (H0) rejection: %d\n', null_hypothesis_rejection(i));
+end
