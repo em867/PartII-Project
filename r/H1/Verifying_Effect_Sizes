@@ -1,0 +1,167 @@
+library(readxl)
+library(dplyr)
+
+# Read the data from the Excel file
+file_path <- "C:/Users/elisa/OneDrive - Irfan Mahmood/EMA/CAMBRIDGE/YEAR 3/PBS 5/DATA/ELISA/r/H1/new dataset.xlsx"
+data <- read_excel(file_path)
+
+# Assuming the dataset has columns for each dimension named as follows
+dimensions <- c("stress", "rumination", "physical_tension", "scenario_anxiety")
+
+# Initialize a list to store effect sizes for each dimension
+effect_sizes <- list()
+
+for (dimension in dimensions) {
+  # Extract the data for the current dimension
+  current_data <- data[[dimension]]
+  
+  # Calculate effect sizes for each day
+  for (day in 1:19) {
+    # Extract first 30 and last 30 observations for the day
+    observations <- current_data[((day-1)*60 + 1):(day*60)]
+    first_30 <- observations[1:30]
+    last_30 <- observations[31:60]
+    
+    # Perform the Wilcoxon signed-rank test
+    test_result <- wilcox.test(first_30, last_30, paired = TRUE)
+    
+    # Without assuming a normal distribution, use the W statistic to estimate Z
+    W <- test_result$statistic
+    N <- length(first_30)  # Number of pairs for the day
+    
+    # The Z value can be approximated from W for large samples
+    Z <- (W - N * (N + 1) / 4) / sqrt(N * (N + 1) * (2 * N + 1) / 24)
+    
+    # Calculate r without assuming a normal distribution
+    r <- Z / sqrt(N)
+    
+    # Store the effect size for the current day in the list
+    effect_sizes[[dimension]][day] <- r
+  }
+}
+
+# Print the list of effect sizes
+print(effect_sizes)
+
+
+
+
+
+
+
+
+
+
+
+
+library(readxl)
+
+# Set the path to the Excel file
+file_path <- "C:/Users/elisa/OneDrive - Irfan Mahmood/EMA/CAMBRIDGE/YEAR 3/PBS 5/DATA/ELISA/r/H1/new dataset.xlsx"
+data <- read_excel(file_path)
+
+# Define the dimensions
+dimensions <- c("stress", "physical_tension", "scenario_anxiety", "rumination")
+
+# Initialize a list to store results
+wilcoxon_results <- list()
+
+# Loop through each dimension
+for (dimension in dimensions) {
+  
+  # Get all the first 30 observations for each dimension across all days
+  first_half <- as.numeric(data[data$observation <= 30, ][[dimension]])
+  
+  # Get all the last 30 observations for each dimension across all days
+  second_half <- as.numeric(data[data$observation > 30, ][[dimension]])
+  
+  # Perform the Wilcoxon signed-rank test
+  test_result <- wilcox.test(first_half, second_half, paired = TRUE)
+  
+  # Extract the p-value and calculate the Z score and effect size (r)
+  p_value <- test_result$p.value
+  Z <- qnorm(p_value / 2, lower.tail = FALSE)
+  r <- abs(Z) / sqrt(length(first_half))
+  
+  # Store the test results
+  wilcoxon_results[[dimension]] <- list(p_value = p_value, Z_value = Z, effect_size = r)
+}
+
+# Output the results
+print(wilcoxon_results)
+
+
+
+
+
+# Load necessary library
+library(readxl)
+
+# Set the path to the Excel file
+file_path <- "C:/Users/elisa/OneDrive - Irfan Mahmood/EMA/CAMBRIDGE/YEAR 3/PBS 5/DATA/ELISA/r/H1/Effect_size_calculation_SA.xlsx"
+
+# Read the data from the Excel file
+data <- read_excel(file_path)
+
+# Perform the Wilcoxon signed-rank test on the paired data
+test_result <- wilcox.test(data$`CONDITION 1`, data$`CONDITION 2`, paired = TRUE)
+
+# Extract the W and p-value from the test result
+W <- test_result$statistic
+p_value <- test_result$p.value
+
+# Calculate the effect size r (Z / sqrt(N))
+# Assuming that we have 30 pairs in the dataset
+N <- 30
+Z <- qnorm(p_value / 2)  # Convert p-value to Z-score for two-tailed test
+r <- Z / sqrt(N)
+
+# Output the results
+cat("W:", W, "\n")
+cat("p-value:", p_value, "\n")
+cat("Effect size (r):", r, "\n")
+
+
+
+
+# Perform the Wilcoxon signed-rank test on the paired data
+test_result <- wilcox.test(data$`CONDITION 1`, data$`CONDITION 2`, paired = TRUE)
+
+# Extract the W value and p-value from the test result
+W <- test_result$statistic
+p_value <- test_result$p.value
+
+# Assuming we're dealing with a two-tailed test
+# Calculate the Z-score from the p-value. For a two-tailed test, the p-value needs to be halved.
+Z <- qnorm(p_value / 2)
+
+# Calculate the number of non-zero differences (excluding ties)
+non_zero_differences <- sum(data$`CONDITION 1` != data$`CONDITION 2`)
+
+# Calculate the effect size r using the absolute Z (to account for the effect size magnitude only)
+r <- abs(Z) / sqrt(non_zero_differences)
+
+# Output the results
+cat("W:", W, "\n")
+cat("p-value:", p_value, "\n")
+cat("Effect size (r):", r, "\n")
+
+
+
+# ABNORMAL DISTRIBUTION CODE #
+
+
+# Without assuming a normal distribution, use the W statistic to estimate Z
+W <- test_result$statistic
+N <- nrow(data)  # Number of pairs
+
+# The Z value can be approximated from W for large samples
+Z <- (W - N * (N + 1) / 4) / sqrt(N * (N + 1) * (2 * N + 1) / 24)
+
+# Now calculate r without assuming a normal distribution
+r <- Z / sqrt(N)
+
+cat("Abnormal distribution\n")
+cat("Approximate Z-score:", Z, "\n")
+cat("Effect size (r):", r, "\n")
+
