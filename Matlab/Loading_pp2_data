@@ -1,0 +1,1954 @@
+% LOADING 15_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 15.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_15_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_15_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_15_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_15_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_15_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_15_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_15_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_15_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_15_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_15_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_15_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_15_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_15_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_15_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_15_03.Wakefulness(:, 2); 
+boredom = dim_struct_15_03.Boredom(:, 2); 
+effort = dim_struct_15_03.Effort(:, 2); 
+attention = dim_struct_15_03.Attention(:, 2); 
+body = dim_struct_15_03.Body(:, 2); 
+sensory_seeking = dim_struct_15_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_15_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_15_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_15_03.Rumination(:, 2); 
+stress = dim_struct_15_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_15_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_15_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_15_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+
+
+
+
+% LOADING 17_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 17.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_17_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_17_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_17_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_17_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_17_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_17_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_17_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_17_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_17_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_17_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_17_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_17_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_17_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_17_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_17_03.Wakefulness(:, 2); 
+boredom = dim_struct_17_03.Boredom(:, 2); 
+effort = dim_struct_17_03.Effort(:, 2); 
+attention = dim_struct_17_03.Attention(:, 2); 
+body = dim_struct_17_03.Body(:, 2); 
+sensory_seeking = dim_struct_17_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_17_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_17_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_17_03.Rumination(:, 2); 
+stress = dim_struct_17_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_17_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_17_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_17_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+
+% LOADING 18_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 18.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_18_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_18_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_18_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_18_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_18_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_18_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_18_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_18_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_18_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_18_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_18_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_18_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_18_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_18_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_18_03.Wakefulness(:, 2); 
+boredom = dim_struct_18_03.Boredom(:, 2); 
+effort = dim_struct_18_03.Effort(:, 2); 
+attention = dim_struct_18_03.Attention(:, 2); 
+body = dim_struct_18_03.Body(:, 2); 
+sensory_seeking = dim_struct_18_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_18_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_18_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_18_03.Rumination(:, 2); 
+stress = dim_struct_18_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_18_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_18_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_18_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+
+
+
+% LOADING 19_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 19.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_19_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_19_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_19_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_19_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_19_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_19_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_19_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_19_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_19_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_19_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_19_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_19_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_19_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_19_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_19_03.Wakefulness(:, 2); 
+boredom = dim_struct_19_03.Boredom(:, 2); 
+effort = dim_struct_19_03.Effort(:, 2); 
+attention = dim_struct_19_03.Attention(:, 2); 
+body = dim_struct_19_03.Body(:, 2); 
+sensory_seeking = dim_struct_19_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_19_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_19_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_19_03.Rumination(:, 2); 
+stress = dim_struct_19_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_19_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_19_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_19_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+% LOADING 20_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 20.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_20_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_20_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_20_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_20_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_20_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_20_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_20_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_20_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_20_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_20_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_20_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_20_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_20_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_20_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_20_03.Wakefulness(:, 2); 
+boredom = dim_struct_20_03.Boredom(:, 2); 
+effort = dim_struct_20_03.Effort(:, 2); 
+attention = dim_struct_20_03.Attention(:, 2); 
+body = dim_struct_20_03.Body(:, 2); 
+sensory_seeking = dim_struct_20_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_20_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_20_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_20_03.Rumination(:, 2); 
+stress = dim_struct_20_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_20_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_20_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_20_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+
+
+
+% LOADING 21_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 21.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_21_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_21_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_21_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_21_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_21_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_21_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_21_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_21_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_21_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_21_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_21_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_21_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_21_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_21_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_21_03.Wakefulness(:, 2); 
+boredom = dim_struct_21_03.Boredom(:, 2); 
+effort = dim_struct_21_03.Effort(:, 2); 
+attention = dim_struct_21_03.Attention(:, 2); 
+body = dim_struct_21_03.Body(:, 2); 
+sensory_seeking = dim_struct_21_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_21_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_21_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_21_03.Rumination(:, 2); 
+stress = dim_struct_21_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_21_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_21_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_21_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+
+% LOADING 22_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 22.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_22_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_22_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_22_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_22_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_22_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_22_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_22_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_22_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_22_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_22_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_22_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_22_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_22_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_22_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_22_03.Wakefulness(:, 2); 
+boredom = dim_struct_22_03.Boredom(:, 2); 
+effort = dim_struct_22_03.Effort(:, 2); 
+attention = dim_struct_22_03.Attention(:, 2); 
+body = dim_struct_22_03.Body(:, 2); 
+sensory_seeking = dim_struct_22_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_22_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_22_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_22_03.Rumination(:, 2); 
+stress = dim_struct_22_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_22_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_22_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_22_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+% LOADING 23_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 23.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_23_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_23_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_23_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_23_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_23_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_23_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_23_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_23_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_23_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_23_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_23_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_23_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_23_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_23_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_23_03.Wakefulness(:, 2); 
+boredom = dim_struct_23_03.Boredom(:, 2); 
+effort = dim_struct_23_03.Effort(:, 2); 
+attention = dim_struct_23_03.Attention(:, 2); 
+body = dim_struct_23_03.Body(:, 2); 
+sensory_seeking = dim_struct_23_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_23_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_23_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_23_03.Rumination(:, 2); 
+stress = dim_struct_23_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_23_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_23_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_23_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+
+% LOADING 24_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 24.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_24_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_24_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_24_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_24_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_24_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_24_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_24_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_24_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_24_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_24_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_24_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_24_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_24_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_24_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_24_03.Wakefulness(:, 2); 
+boredom = dim_struct_24_03.Boredom(:, 2); 
+effort = dim_struct_24_03.Effort(:, 2); 
+attention = dim_struct_24_03.Attention(:, 2); 
+body = dim_struct_24_03.Body(:, 2); 
+sensory_seeking = dim_struct_24_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_24_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_24_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_24_03.Rumination(:, 2); 
+stress = dim_struct_24_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_24_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_24_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_24_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
+
+
+
+
+
+
+
+
+
+
+% LOADING 25_03 %
+
+Partisipant = 1
+
+% Function to extract dimensions from app
+
+%Load path and file
+path=('C:\Users\elisa\OneDrive - Irfan Mahmood\EMA\CAMBRIDGE\YEAR 3\PBS 5\DATA\ELISA\MANUAL TET SPREADSHEETS');
+cd(path)
+
+fname = 'matlab1.1.mat';
+load(fname,"ODESA_APP_DATA")
+
+TET_table=[]
+file='GARRY 25.03 EDIT.xlsx';
+TET_table=readcell(file);
+
+%% Daily Trace 
+if any(strcmpi(TET_table(:,4),'Question 1: How alert did you feel during the meditation?'))
+
+
+% Find idx of each drawing
+idx=[];
+k =[];
+idx=strcmpi(TET_table(:,3), 'Submit rating');
+k=find(idx);  %Row of 'Sumit Rating'
+length(k)
+if length(k)==11
+    '11 Dimensions filled'
+elseif length(k)>11
+    ([num2str(length(k)) ' indexes yielded']) %?
+    return
+elseif length(k) < 11
+    ([num2str(length(k)) ' indexes yielded'])
+end
+
+% % Checking correct order
+% idx_info=TET_table(k, 4);
+% length(idx_info) %Should be 5
+% Correct_Order = sum(strcmpi(idx_info, daily_dim_order)) %Should be 5
+% if Correct_Order == 5
+
+sidx=strcmpi(TET_table(:,2), 'MENU');
+u=find(sidx);
+
+%Initialising struct
+dim_struct_25_03=struct('Wakefulness', [],'Boredom', [], 'Effort', [], 'Attention', [], 'Body', [], 'Sensoryseeking', [], 'Physicaltension', [], 'Scenarioanxiety', [], 'Rumination', [], 'Stress', [], 'Personalizeddimension', []);
+fn=fieldnames(dim_struct_25_03);
+
+
+% % % % % % 
+for i=1:length(k)-1
+    idx=(k(i)+1);
+    until=(k(i+1)-3);
+
+    v =[]
+    v=(TET_table(idx:until, 8));
+    v=cell2mat(v);
+
+    n =[]
+    n=(TET_table(idx:until, 7));
+    n=cell2mat(n)
+   % % % % % % 
+
+      %Cleaning values 
+    for c=1:length(v)
+        if v(c) > 4   
+            v(c) = 4;
+        elseif v(c) < 0
+            v(c) = 0;
+        end
+    end
+    d = [n v] 
+    dim_struct_25_03.(fn{i})=d;      
+end
+
+% Extract Time Stamp 
+TimeS =[]
+TET_table = cell2table(TET_table);
+TimeS = (TET_table((k(1)+1),"TET_table1"));
+TimeS = string(TimeS.TET_table1{1,1});
+TimeSChars = convertStringsToChars(TimeS);
+LTimeSChars = length(TimeSChars);
+TimeS = TimeSChars(1:(LTimeSChars)-2);
+% TimeS = datetime(TimeS,'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS','Format','dd-MMM-yyyy HH:mm:ss.SSS');
+TET_table = table2cell(TET_table);
+
+%Caculate Trace Number  
+
+TraceNumber =[]
+
+
+if length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)==0
+    
+    TraceNumber = 1
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)<2 && length(ODESA_APP_DATA(Partisipant).DailyTrace(1).Wakefulness)>0
+
+    TraceNumber = 2
+
+elseif length(ODESA_APP_DATA(Partisipant).DailyTrace)>1
+
+    TraceNumber = (length(ODESA_APP_DATA(Partisipant).DailyTrace))+1
+
+end 
+
+%Format 
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Wakefulness = dim_struct_25_03.Wakefulness
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Boredom = dim_struct_25_03.Boredom
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Effort = dim_struct_25_03.Effort
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Attention = dim_struct_25_03.Attention
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Body = dim_struct_25_03.Body
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Sensoryseeking = dim_struct_25_03.Sensoryseeking
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Physicaltension = dim_struct_25_03.Physicaltension
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Scenarioanxiety = dim_struct_25_03.Scenarioanxiety
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Rumination = dim_struct_25_03.Rumination
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Stress = dim_struct_25_03.Stress
+ODESA_APP_DATA(Partisipant).DailyTrace(TraceNumber).Personalizeddimension = dim_struct_25_03.Personalizeddimension
+
+
+
+
+%Saving 
+save(fname)
+%end
+end
+
+
+
+
+
+
+
+% DATA REDUCTION %
+
+
+
+
+
+
+% Making variables for the y values of each of the dimensions
+wakefulness = dim_struct_25_03.Wakefulness(:, 2); 
+boredom = dim_struct_25_03.Boredom(:, 2); 
+effort = dim_struct_25_03.Effort(:, 2); 
+attention = dim_struct_25_03.Attention(:, 2); 
+body = dim_struct_25_03.Body(:, 2); 
+sensory_seeking = dim_struct_25_03.Sensoryseeking(:, 2); 
+physical_tension = dim_struct_25_03.Physicaltension(:, 2); 
+scenario_anxiety = dim_struct_25_03.Scenarioanxiety(:, 2); 
+rumination = dim_struct_25_03.Rumination(:, 2); 
+stress = dim_struct_25_03.Stress(:, 2); 
+
+% Initialize an empty structure for reduced dimensions
+averaged_dimensions_25_03 = struct();
+
+% Define the list of dimension variable names (assuming you already have these variables)
+dimension_variable_names = {'wakefulness', 'boredom', 'effort', 'attention', 'body', 'sensory_seeking', 'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+
+% Define the target number of data points for each dimension (60 in this case)
+target_num_points = 60;
+
+% Loop over each dimension variable
+for i = 1:numel(dimension_variable_names)
+    % Get the y values for the current dimension
+    y_values = eval(dimension_variable_names{i});
+    
+    % Determine the number of data points in the current dimension
+    num_points = numel(y_values);
+    
+    % Check if upsampling or downsampling is needed
+    if num_points > target_num_points
+        % Downsampling: Calculate the number of data points per 20-second epoch
+        points_per_epoch = num_points / target_num_points;
+        
+        % Reshape the y values into epochs and calculate the mean within each epoch
+        averaged_values = arrayfun(@(x) mean(y_values(round((x-1)*points_per_epoch)+1:round(x*points_per_epoch))), 1:target_num_points);
+    else
+        % Upsampling: Interpolate to obtain 60 data points
+        averaged_values = interp1(1:num_points, y_values, linspace(1, num_points, target_num_points));
+    end
+    
+    % Store the averaged values for the current dimension in the reduced dimensions structure
+    averaged_dimensions_25_03.(dimension_variable_names{i}) = averaged_values;
+end
+
+% Now, the 'averaged_dimensions_25_03' structure contains all dimensions with either 60 averaged values each (in case of downsampling) or 60 interpolated values (in case of upsampling).
