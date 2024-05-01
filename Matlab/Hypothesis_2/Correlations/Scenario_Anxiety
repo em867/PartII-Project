@@ -1,0 +1,73 @@
+% OVERALL COEFFICIENT %
+
+% extracting stress
+stress_data = mega_dimensions.stress;
+% extracting scenario_anxiety
+scenario_anxiety_data = mega_dimensions.scenario_anxiety;
+
+% Collapse the matrices into vectors
+stress_vector = stress_data(:); % Convert stress_data into a column vector
+scenario_anxiety_vector = scenario_anxiety_data(:); % Convert scenario_anxiety_data into a column vector
+
+% Calculate Spearman's rank correlation coefficient and p-value
+[rho_overall, p_value] = corr(stress_vector, scenario_anxiety_vector, 'Type', 'Spearman');
+
+% Store in coefficients structure
+all_correlation_coefficients.stress_scenario_anxiety = rho_overall;
+
+% Display results including the p-value
+disp(['Overall Spearman''s rank correlation coefficient: ', num2str(rho_overall), ', p-value: ', num2str(p_value)]);
+
+
+
+
+% COEFFICIENT PER DAY %
+
+% Individual analysis on each day
+rho_each_day = zeros(1, size(stress_data, 1));
+p_value_each_day = zeros(1, size(stress_data, 1)); % Initialize array for p-values
+for i = 1:size(stress_data, 1)
+    [rho_each_day(i), p_value_each_day(i)] = corr(stress_data(i,:)', scenario_anxiety_data(i,:)', 'Type', 'Spearman');
+end
+
+% Store in coefficients structure for each day
+correlation_coefficients_individual_days.stress_scenario_anxiety = struct('rho', rho_each_day, 'p_value', p_value_each_day);
+
+% Display correlation coefficient and p-value for each day
+disp('Spearman''s rank correlation coefficient and p-value for each day:');
+disp(correlation_coefficients_individual_days.stress_scenario_anxiety);
+
+
+
+
+
+% PLOTTING RESULTS PER DAY %
+
+% Assuming 'correlation_coefficients_individual_days' structure is already loaded
+
+% Extract correlation coefficients for stress_scenario_anxiety for each day
+correlation_coefficients = correlation_coefficients_individual_days.stress_scenario_anxiety.rho;
+
+% Plot the correlation coefficients in a scatterplot with color coding
+figure;
+hold on;
+for day = 1:numel(correlation_coefficients)
+    coefficient = correlation_coefficients(day);
+    if abs(coefficient) > 0.6
+        color = 'r'; % Blue for correlation coefficients in the range [-1, -0.6] and [0.6, 1]
+    elseif abs(coefficient) > 0.4
+        color = 'b'; % Red for correlation coefficients greater than 0.4 or smaller than -0.4
+    else
+        color = 'g'; % Black for correlation coefficients within the range [-0.4, 0.4]
+    end
+    scatter(day, coefficient, color, 'filled');
+end
+
+xlabel('DAY');
+ylabel('SPEARMAN COEFFICIENT (R)');
+title('Stress VS Scenario Anxiety');
+
+% Add grid lines
+grid on;
+
+hold off;
