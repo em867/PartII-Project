@@ -1,0 +1,150 @@
+# FOR physical_tension ONLY #
+
+rm(list = ls())
+
+# Install necessary packages if not already installed
+if (!require("lme4")) install.packages("lme4")
+if (!require("readxl")) install.packages("readxl")
+
+if (!require("nlme")) install.packages("nlme", dependencies = TRUE)
+library(nlme)
+
+
+# Load the packages
+library(lme4)
+library(readxl)
+
+if (!require("lmerTest")) install.packages("lmerTest")
+library(lmerTest)
+
+# Load the data from the Excel file
+data <- read_excel("C:/Users/elisa/OneDrive - Irfan Mahmood/EMA/CAMBRIDGE/YEAR 3/PBS 5/DATA/new dataset.xlsx")
+
+# Check the structure of the data
+str(data)
+
+
+
+# Assuming data is already loaded and 'day' variable is properly assigned
+# You might need to re-run your existing preprocessing if you restart the session
+
+# Calculate the slope for each day using a simple linear model
+slopes <- lapply(split(data, data$day), function(df) {
+  coef(lm(physical_tension ~ stress, data = df))[["stress"]]
+})
+
+# Determine days with a positive and negative relationship
+positive_days <- names(slopes)[sapply(slopes, `>`, 0)]
+negative_days <- names(slopes)[sapply(slopes, `<`, 0)]
+
+# Subset the data based on the sign of the relationship
+positive_data <- data[data$day %in% positive_days, ]
+negative_data <- data[data$day %in% negative_days, ]
+
+# Run LMM on the segmented data
+model_positive <- lmer(physical_tension ~ stress + (1 | day), data = positive_data)
+model_negative <- lmer(physical_tension ~ stress + (1 | day), data = negative_data)
+
+
+# Summarise pos models
+summary(model_positive)
+model_positive
+
+# Summarise neg models
+summary(model_negative)
+model_negative
+
+
+# Extract regression coefficients for the fixed effects
+coef_positive <- fixef(model_positive)
+coef_negative <- fixef(model_negative)
+
+
+
+
+
+# VISUALISATION #
+
+# Create a new data frame for plotting the overall regression lines
+plot_data <- data.frame(
+  stress = range(data$stress),
+  physical_tension_positive = coef_positive[1] + coef_positive[2] * range(data$stress),
+  physical_tension_negative = coef_negative[1] + coef_negative[2] * range(data$stress)
+)
+
+# Plot the original data with the two overall regression lines
+ggplot(data, aes(x = stress, y = physical_tension)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +
+  geom_line(data = plot_data, aes(x = stress, y = physical_tension_positive), color = "red", size = 1) +
+  geom_line(data = plot_data, aes(x = stress, y = physical_tension_negative), color = "blue", size = 1) +
+  labs(title = "Observed vs. Predicted Physical Tension by Stress Level",
+       x = "Stress Level", y = "Physical Tension", color = "Day") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+
+
+
+
+
+
+
+# First plot
+p1 <- ggplot(data, aes(x = stress, y = physical_tension)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +
+  geom_line(data = plot_data, aes(x = stress, y = physical_tension_positive), color = "red", size = 1) +
+  geom_line(data = plot_data, aes(x = stress, y = physical_tension_negative), color = "blue", size = 1) +
+  labs(title = "Observed vs. Predicted Physical Tension by Stress Level",
+       x = "Stress Level", y = "Physical Tension", color = "Day") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+# Second plot with colored regression lines based on the slope direction
+p2 <- ggplot(data_with_slopes, aes(x = stress, y = physical_tension)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +
+  geom_smooth(aes(group = day, color = slope_direction), method = "lm", se = FALSE, alpha = 0.5) +
+  scale_color_manual(values = c("Positive" = "red", "Negative" = "blue")) +
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Physical Tension by Stress Level for Each Day",
+       x = "Stress Level", y = "Physical Tension", color = "Slope") +
+  theme(legend.position = "right")
+
+
+# Arrange the plots side by side
+grid.arrange(p1, p2, ncol = 2)
+
+
+
+
+
+
+
+# Assuming 'data' is your dataframe and it has a column named 'day'
+# Check the column names to ensure 'day' is present
+print(names(data))
+
+# Calculate the slopes for each 'day'
+slopes <- data %>%
+  group_by(day) %>%
+  do(tidy(lm(physical_tension ~ stress, data = .))) %>%
+  filter(term == "stress") %>%
+  mutate(slope_direction = ifelse(estimate > 0, "Positive", "Negative")) %>%
+  select(day, slope_direction) # Ensure 'day' and 'slope_direction' are in 'slopes'
+
+# Join the slope directions back to the original data
+data_with_slopes <- data %>%
+  left_join(slopes, by = "day")
+
+# Second plot with colored regression lines based on the slope direction
+p2 <- ggplot(data_with_slopes, aes(x = stress, y = physical_tension)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +
+  geom_smooth(aes(group = day, color = slope_direction), method = "lm", se = FALSE, alpha = 0.5) +
+  scale_color_manual(values = c("Positive" = "red", "Negative" = "blue")) +
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Physical Tension by Stress Level for Each Day",
+       x = "Stress Level", y = "Physical Tension", color = "Slope") +
+  theme(legend.position = "right")
+
+# Arrange the plots side by side
+grid.arrange(p1, p2, ncol = 2)
+
