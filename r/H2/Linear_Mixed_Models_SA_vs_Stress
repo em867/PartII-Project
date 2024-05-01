@@ -1,0 +1,248 @@
+rm(list = ls())
+
+
+
+# Install necessary packages if not already installed
+if (!require("lme4")) install.packages("lme4")
+if (!require("readxl")) install.packages("readxl")
+
+if (!require("nlme")) install.packages("nlme", dependencies = TRUE)
+library(nlme)
+
+
+# Load the packages
+library(lme4)
+library(readxl)
+
+if (!require("lmerTest")) install.packages("lmerTest")
+library(lmerTest)
+
+# Load the data from the Excel file
+data <- read_excel("C:/Users/elisa/OneDrive - Irfan Mahmood/EMA/CAMBRIDGE/YEAR 3/PBS 5/DATA/new dataset.xlsx")
+
+# Check the structure of the data
+str(data)
+
+
+# If necessary, convert factors to numeric if they're read as factors
+data$stress <- as.numeric(as.character(data$stress))
+data$scenario_anxiety <- as.numeric(as.character(data$scenario_anxiety))
+
+# Assuming the data is ordered and each day has 60 observations
+data$day <- rep(1:19, each = 60)
+
+# Fit the model with stress as the predictor and scenario_anxiety as the response variable
+model <- lmer(scenario_anxiety ~ stress + (1 | day), data = data)
+
+# View model
+model
+
+# Display the summary of the model
+summary(model)
+
+# Plot residuals
+plot(resid(model))
+
+# Check for normality of residuals
+hist(resid(model))
+
+
+
+# CHECKING FOR LINEARITY #
+
+
+# Calculate the residuals
+residuals <- resid(model)
+
+# Create a Q-Q plot of the residuals
+qqnorm(residuals)
+qqline(residuals, col = "red")
+
+
+
+
+# VISUALISATIONS #
+
+library(ggplot2)
+
+
+# Assuming your fitted model object is named lmeModel
+# and your original data is named data
+
+# Add predicted values to the dataset
+data$predicted_scenario_anxiety <- predict(model, re.form = NA)  # re.form = NA to exclude random effects
+
+# Create the plot with ggplot2
+ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.5) +
+  geom_line(aes(y = predicted_scenario_anxiety, group = day), color = 'red', size = 1) +
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level",
+       x = "Stress Level",
+       y = "Scenario Anxiety",
+       color = "Day")
+
+
+
+# Observed Vs predicted ggplot #
+
+
+# Create variable storing the number of days
+data$count <- ave(data$observation, data$day, FUN = length)
+
+
+# ATTEMPT 1, on the right path just looks very busy #
+ggplot(data, aes(x = stress, y = scenario_anxiety, color = as.factor(day), size = count)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", aes(group = day), se = TRUE) +
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level",
+       x = "Stress Level",
+       y = "Scenario Anxiety",
+       color = "Day",
+       size = "Number of Observations") +
+  guides(size = guide_legend(title = "Number of Participants"))
+
+
+
+# ATTEMPT 2, getting rid of all of the predictor lines for each individual day and just having 1 predictor line #
+ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +  # Reduce opacity to avoid heavy overlapping
+  geom_smooth(method = "lm", se = TRUE, color = 'black') +  # One regression line for overall trend
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level",
+       x = "Stress Level",
+       y = "Scenario Anxiety",
+       color = "Day") +
+  theme(legend.position = "right")  # Adjust legend position for better readability
+
+
+# Adjust the code for the regression line and confidence interval - THIS ONE IS GOOD
+ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +  # Reduce opacity to avoid heavy overlapping
+  geom_smooth(method = "lm", se = TRUE, linetype = "solid", color = 'red') +  # Regression line in red
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level",
+       x = "Stress Level",
+       y = "Scenario Anxiety",
+       color = "Day") +
+  theme(legend.position = "right")  # Adjust legend position for better readability
+
+
+
+
+
+
+# ATTEMPT 3, a predictor line for each day on the same plot - this works and looks good #
+
+
+# Create the plot with ggplot2
+ggplot(data, aes(x = stress, y = scenario_anxiety, color = as.factor(day))) +
+  geom_point(alpha = 0.4) +  # Use a lower alpha to reduce overplotting
+  geom_smooth(aes(group = day), method = "lm", se = FALSE, alpha = 0.5) +  # Add individual lines per day
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level",
+       x = "Stress Level",
+       y = "Scenario Anxiety",
+       color = "Day") +
+  theme(legend.position = "right")  # Adjust legend position for better readability
+
+# Making each regression line red
+
+# Plotting code for individual red regression lines without faceting
+ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +  # Points colored by day
+  geom_smooth(aes(group = day), method = "lm", se = FALSE, color = "red", alpha = 0.5) +  # Regression lines in red
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level for Each Day",
+       x = "Stress Level",
+       y = "Scenario Anxiety",
+       color = "Day") +
+  theme(legend.position = "right")  # Keep legend to differentiate days by color
+
+
+
+
+# ATTEMPT 4, creating a plot for each day #
+
+# Create the plot with ggplot2
+ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(alpha = 0.4) +  # Use a lower alpha to reduce overplotting
+  geom_smooth(method = "lm", se = FALSE, alpha = 0.5) +  # Add regression lines per day
+  facet_wrap(~ day, ncol = 4) +  # Create separate plots for each day
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level for Each Day",
+       x = "Stress Level",
+       y = "Scenario Anxiety") +
+  theme(legend.position = "none")  # Hide the legend to reduce clutter
+
+
+# with different colours for each day
+
+# Create the plot with ggplot2
+ggplot(data, aes(x = stress, y = scenario_anxiety, color = as.factor(day))) +
+  geom_point(alpha = 0.4) +  # Use a lower alpha to reduce overplotting
+  geom_smooth(method = "lm", se = FALSE, color = "black") +  # Change regression lines to black
+  facet_wrap(~ day, ncol = 4) +  # Create separate plots for each day
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level for Each Day",
+       x = "Stress Level",
+       y = "Scenario Anxiety",
+       color = "Day") +
+  theme(legend.position = "right")  # Adjust legend position to the right of the plot
+
+
+# with the same colour - THIS ONE (FOR SEPARATE PLOTS FOR EACH DAY)
+
+# Create the plot with ggplot2
+ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(color = "blue", alpha = 0.4) +  # Set points to blue
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add red regression lines
+  facet_wrap(~ day, ncol = 4) +  # Create separate plots for each day
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level for Each Day",
+       x = "Stress Level",
+       y = "Scenario Anxiety") +
+  theme(legend.position = "none")  # Hide the legend to reduce clutter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if (!require("gridExtra")) install.packages("gridExtra")
+library(gridExtra)
+
+
+library(ggplot2)
+library(gridExtra)
+
+# First plot
+p1 <- ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +
+  geom_smooth(method = "lm", se = TRUE, linetype = "solid", color = 'red') +
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level",
+       x = "Stress Level", y = "Scenario Anxiety", color = "Day") +
+  theme(legend.position = "right")
+
+# Second plot
+p2 <- ggplot(data, aes(x = stress, y = scenario_anxiety)) +
+  geom_point(aes(color = as.factor(day)), alpha = 0.4) +
+  geom_smooth(aes(group = day), method = "lm", se = FALSE, color = "red", alpha = 0.5) +
+  theme_minimal() +
+  labs(title = "Observed vs. Predicted Scenario Anxiety by Stress Level for Each Day",
+       x = "Stress Level", y = "Scenario Anxiety", color = "Day") +
+  theme(legend.position = "right")
+
+# Arrange the plots side by side
+grid.arrange(p1, p2, ncol = 2)
+
