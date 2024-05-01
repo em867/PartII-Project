@@ -1,0 +1,194 @@
+% OVERALL CORRELATION COEFFICIENT FOR EACH %
+
+% Extract correlation coefficient values
+rumination_coefficient = all_correlation_coefficients.stress_rumination;
+physical_tension_coefficient = all_correlation_coefficients.stress_physical_tension;
+scenario_anxiety_coefficient = all_correlation_coefficients.stress_scenario_anxiety;
+
+% Plot the correlation coefficients in a scatterplot
+figure;
+scatter(1, rumination_coefficient, 'b', 'filled');
+hold on;
+scatter(2, physical_tension_coefficient, 'r', 'filled');
+scatter(3, scenario_anxiety_coefficient, 'g', 'filled');
+xticks([1, 2, 3]);
+xticklabels({'Rumination', 'Physical Tension', 'Scenario Anxiety'});
+xlabel('DIMENSION');
+ylabel('SPEARMAN''S R');
+title('Stress VS Rumination, Physical Tension, Scenario Anxiety');
+
+% Adjust x-axis limits to add padding
+x_margin = 0.1; % Set the desired margin
+xlim([0.5 - x_margin, 3 + 0.5 + x_margin]);
+
+% Add grid lines
+grid on;
+
+
+hold off;
+
+
+
+
+% PLOTTING COEFFICIENTS FOR EACH INDIVIDUAL DAY %
+
+
+% Define dimension names and corresponding titles
+dimension_names = {'physical_tension', 'scenario_anxiety', 'rumination'};
+titles = {'Physical Tension', 'Scenario Anxiety', 'Rumination'};
+
+% Create a 1x3 subplot grid
+figure;
+for i = 1:numel(dimension_names)
+    % Extract correlation coefficients for the current dimension
+    correlation_coefficients = correlation_coefficients_individual_days.(['stress_' dimension_names{i}]).rho;
+
+    % Create subplot
+    subplot(3, 1, i); % Adjusted subplot parameters
+    
+    % Plot the correlation coefficients in a scatterplot with color coding
+    hold on;
+    for day = 1:numel(correlation_coefficients)
+        coefficient = correlation_coefficients(day);
+        if abs(coefficient) > 0.6
+            color = 'r'; % Red for correlation coefficients in the range [-1, -0.6] and [0.6, 1]
+        elseif abs(coefficient) > 0.4
+            color = 'b'; % Blue for correlation coefficients in the range [-0.4, 0.4]
+        else
+            color = 'g'; % Green for correlation coefficients greater than 0.4 or smaller than -0.4
+        end
+        scatter(day, coefficient, color, 'filled');
+    end
+
+    xlabel('DAY');
+    ylabel('SPEARMAN''S R');
+    title(['Stress VS ' titles{i}]); % Use custom title
+    
+    % Set y-axis limits to ensure consistent grid line heights
+    ylim([-1, 1]); % Adjust the limits as needed based on your data range
+    
+    % Add grid lines
+    grid on;
+
+
+    hold off;
+end
+
+
+
+
+
+% BOXPLOTS SHOWING DISTRIBUTION OF COEFFICIENTS PER DIMENSION %
+
+
+% Extract correlation coefficients for each dimension
+rho_rumination = correlation_coefficients_individual_days.stress_rumination.rho;
+rho_physical_tension = correlation_coefficients_individual_days.stress_physical_tension.rho;
+rho_scenario_anxiety = correlation_coefficients_individual_days.stress_scenario_anxiety.rho;
+
+% Combine correlation coefficients and corresponding labels
+coefficients = [rho_rumination(:), rho_physical_tension(:), rho_scenario_anxiety(:)];
+labels = {'Rumination', 'Physical Tension', 'Scenario Anxiety'};
+
+% Create boxplot
+boxplot(coefficients, 'Labels', labels);
+
+% Set axis labels and title
+xlabel('DIMENSION');
+ylabel('SPEARMAN''S R');
+title('Distribution: Stress VS Rumination, Physical Tension, Scenario Anxiety');
+
+% ADD GRID LINES %
+
+
+
+
+
+
+% COEFFICIENT VARIANCE %
+
+
+
+% Extract correlation coefficients for each dimension
+rho_rumination = correlation_coefficients_individual_days.stress_rumination.rho;
+rho_physical_tension = correlation_coefficients_individual_days.stress_physical_tension.rho;
+rho_scenario_anxiety = correlation_coefficients_individual_days.stress_scenario_anxiety.rho;
+
+% Calculate the variance of each coefficient
+var_rumination = var(rho_rumination);
+var_physical_tension = var(rho_physical_tension);
+var_scenario_anxiety = var(rho_scenario_anxiety);
+
+% Store each variance value into a structure called all_dims_variance
+all_dims_variance.rumination = var_rumination;
+all_dims_variance.physical_tension = var_physical_tension;
+all_dims_variance.scenario_anxiety = var_scenario_anxiety;
+
+% Plot the variances in a scatterplot
+figure;
+scatter(1, var_rumination, 'b', 'filled'); hold on;
+scatter(2, var_physical_tension, 'r', 'filled');
+scatter(3, var_scenario_anxiety, 'g', 'filled');
+
+% Customize plot
+xlabel('DIMENSION');
+ylabel('VARIANCE');
+title('Spearman''s R Variance');
+xticks([1, 2, 3]);
+xticklabels({'Rumination', 'Physical Tension', 'Scenario Anxiety'});
+xlim([0.5, 3.5]); % Adjust the x-axis limits to prevent the points from touching the sides
+grid on;
+
+hold off; % Ensure that hold is turned off after plotting
+
+
+
+
+
+
+
+% Define dimension names and corresponding titles
+dimension_names = {'physical_tension', 'scenario_anxiety', 'rumination'};
+titles = {'Physical Tension', 'Scenario Anxiety', 'Rumination'};
+
+% Create a 1x3 subplot grid
+figure;
+for i = 1:numel(dimension_names)
+    % Extract correlation coefficients and p-values for the current dimension
+    correlation_data = correlation_coefficients_individual_days.(['stress_' dimension_names{i}]);
+    correlation_coefficients = correlation_data.rho;
+    p_values = correlation_data.p_value;
+
+    % Create subplot
+    subplot(3, 1, i); % Adjusted subplot parameters
+    
+    % Plot the correlation coefficients in a scatterplot with color coding based on p-values
+    hold on;
+    for day = 1:numel(correlation_coefficients)
+        coefficient = correlation_coefficients(day);
+        p_value = p_values(day);
+
+        % Define color based on p-value thresholds
+        if p_value < 0.01
+            color = 'r'; % Red for highly significant correlations (p < 0.01)
+        elseif p_value < 0.05
+            color = 'b'; % Blue for significant correlations (p < 0.05)
+        else
+            color = 'g'; % Green for non-significant correlations (p >= 0.05)
+        end
+
+        scatter(day, coefficient, 36, color, 'filled'); % Use a consistent size for all points for clarity
+    end
+
+    xlabel('DAY');
+    ylabel('SPEARMAN''S R');
+    title(['Stress VS ' titles{i}]); % Use custom title
+    
+    % Set y-axis limits to ensure consistent grid line heights
+    ylim([-1, 1]); % Adjust the limits as needed based on your data range
+    
+    % Add grid lines
+    grid on;
+
+    hold off;
+end
