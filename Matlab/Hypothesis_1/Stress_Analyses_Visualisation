@@ -1,0 +1,203 @@
+% stress WILCOXON TEST (ALL VALUES)
+
+
+% Extract all data for the stress dimension
+stress_data = mega_dimensions.stress;
+
+% Extract the first 30 columns (first half) for stress_breathing
+stress_breathing = stress_data(:, 1:30);
+
+% Extract the last 30 columns (second half) for stress_bs
+stress_bs = stress_data(:, 31:end);
+
+% Perform Wilcoxon signed-rank test across all days
+[p, h, stats] = signrank(stress_breathing(:), stress_bs(:));
+
+% Store results in a structure
+wilcoxon_results.stress = struct(...
+    'p_value', p, ...
+    'H0_rejection', h, ...
+    'test_statistic', stats.zval, ...
+    'signed_rank', stats.signedrank);  % 'rank_sum' is not an output of signrank
+
+% Display the results
+fprintf('Wilcoxon signed-rank test:\n');
+fprintf('   p-value: %.6f\n', p);
+fprintf('   H0 rejection: %d\n', h);
+fprintf('   Test statistic (z-value): %.6f\n', stats.zval);
+fprintf('   Signed rank: %d\n', stats.signedrank);  % This line changed from 'rank_sum' to 'signed_rank'
+
+
+% GETTING WILCOXON EFFECT SIZE (r) for stress %
+
+% Calculate the test statistic
+Z = stats.zval;
+
+% Calculate the number of observations effectively used in the test
+non_zero_pairs = stress_breathing ~= stress_bs;
+N_effective = sum(non_zero_pairs, 'all');  % Sum over all dimensions to get total number of non-zero differences
+
+% Calculate the effect size
+effect_size = Z / sqrt(N_effective);  % Use N_effective instead of N
+
+% Store the corrected effect size in the structure
+all_dims_effect_sizes.stress = effect_size;
+
+% Display the corrected effect size
+fprintf('Effect size (r): %.6f\n', effect_size);
+
+
+
+
+
+% DOING LINE PLOTS FOR EFFECT SIZES EACH DAY INDIVIDUALLY %
+
+
+% Define num_days based on the size of mega_dimensions.stress
+num_days = size(mega_dimensions.stress, 1);
+
+% Initialize structures to store daily values
+daily_z_val.stress = zeros(num_days, 1);
+daily_w_val.stress = zeros(num_days, 1);
+daily_effect_sizes_stress = struct();
+
+for day = 1:num_days
+    % Extract data for the current day
+    day_data = mega_dimensions.stress(day, :);
+
+    % Perform Wilcoxon signed-rank test for the current day
+    [p, ~, stats] = signrank(day_data(:, 1:30), day_data(:, 31:60)); % It compares the first half of the day's data against the second half
+
+    % Extract the Z value from the test statistics
+    Z = stats.zval;
+
+    % Store the Z value in the daily_z_val structure
+    daily_z_val.stress(day) = Z;
+
+    % Extract the W value (signed rank sum) from the test statistics
+    W = stats.signedrank;
+
+    % Store the W score in the daily_w_val structure
+    daily_w_val.stress(day) = W;
+
+    % Calculate the number of observations that were not tied or zero
+    non_zero_pairs = day_data(:, 1:30) ~= day_data(:, 31:60);
+    N_effective = sum(non_zero_pairs); % Number of non-zero, non-tie pairs
+
+    % Calculate the effect size for the current day using the formula
+    effect_size = Z / sqrt(N_effective);
+
+    % Store effect sizes in the original structure
+    daily_effect_sizes_stress(day).effect_size = effect_size;
+
+    % Display the effect size for the current day
+    fprintf('Day %d: Z=%.2f, W=%.2f, Effect size (r): %.6f\n', day, Z, W, effect_size);
+end
+
+% Visualize the effect sizes in a line plot
+effect_sizes = [daily_effect_sizes_stress.effect_size]; % Extract effect sizes
+plot(effect_sizes, '-o');
+xlabel('DAY');
+ylabel('EFFECT SIZE (r)');
+title('Stress: Daily Effect Sizes');
+
+
+
+
+
+
+
+
+% BOX PLOT FOR MEGA DIMS STRESS %
+
+
+
+% Define the number of days and the number of epochs per day
+num_days_stress = size(mega_dimensions.stress, 1);
+num_epochs_per_day_stress = size(mega_dimensions.stress, 2);
+
+% Extract the first half and second half of the y values for the "stress" dimension
+first_half_stress = mega_dimensions.stress(:, 1:num_epochs_per_day_stress/2);
+second_half_stress = mega_dimensions.stress(:, num_epochs_per_day_stress/2+1:end);
+
+% Combine the data for boxplot
+combined_data_stress = [first_half_stress(:), second_half_stress(:)];
+
+% Plot boxplot for comparison
+figure;
+boxplot(combined_data_stress, 'Labels', {'Breathing', 'Body Scanning'});
+xlabel('MEDITATION TYPE');
+ylabel('SELF-REPORTED STRESS');
+title('Stress by Meditation Type');
+
+
+
+
+
+
+% COMPARING MEANS PLOT (STRESS ONLY) %
+
+
+% Calculate mean values for each day of the first experimental condition
+mean_breathing_stress = mean(mega_dimensions.stress(:, 1:30), 2);
+
+% Calculate mean values for each day of the second experimental condition
+mean_bs_stress = mean(mega_dimensions.stress(:, 31:60), 2);
+
+% Plotting the paired means with different colors and circles for each experimental condition
+figure;
+hold on;
+for i = 1:length(mean_breathing_stress)
+    plot([1, 2], [mean_breathing_stress(i), mean_bs_stress(i)], '-o', 'Color', [0.5, 0.5, 0.5]); % Line in grey
+    plot(1, mean_breathing_stress(i), 'ro', 'MarkerSize', 8); % Circles for experimental condition 1 in red
+    plot(2, mean_bs_stress(i), 'bo', 'MarkerSize', 8); % Circles for experimental condition 2 in blue
+end
+
+% Customize the plot
+xlabel('MEDITATION TYPE');
+ylabel('MEAN VALUES');
+title('Stress: Paired Mean Values by Meditation Type');
+xticks([1, 2]);
+xticklabels({'Breathing', 'Body Scanning'});
+grid on;
+
+% Adjusting x-axis limits to position points closer to the sides
+x_margin = 0.1; % Set the desired margin
+xlim([1 - x_margin, 2 + x_margin]);
+
+
+
+
+
+
+% VIOLIN PLOT INSIDE OF BOXPLOT stress %
+
+
+% Define the number of days and the number of epochs per day
+num_days_stress = size(mega_dimensions.stress, 1);
+num_epochs_per_day_stress = size(mega_dimensions.stress, 2);
+
+% Extract the first half and second half of the y values for the "stress" dimension
+first_half_stress = mega_dimensions.stress(:, 1:num_epochs_per_day_stress/2);
+second_half_stress = mega_dimensions.stress(:, num_epochs_per_day_stress/2+1:end);
+
+% Combine the data for violin plot
+combined_data_stress = [first_half_stress(:), second_half_stress(:)];
+
+% Plot violin plot
+figure;
+violin(combined_data_stress, 'xlabel',{'Breathing', 'Body Scanning'}, 'facecolor', [1 0.5 0.5], 'edgecolor', [0.7 0 0]);
+xlabel('MEDITATION TYPE');
+ylabel('SELF-REPORTED stress');
+title('Stress by Meditation Type');
+
+% Hold on to the current plot
+hold on;
+
+% Plot box plots
+boxplot(combined_data_stress, 'Labels', {'Breathing', 'Body Scanning'}, ...
+    'Positions', [1, 2], 'Widths', 0.2, 'Color', [0.7 0 0], 'BoxStyle', 'outline');
+
+% Add grid lines
+grid on;
+
