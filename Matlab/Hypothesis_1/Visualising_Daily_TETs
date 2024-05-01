@@ -1,0 +1,37 @@
+% Assuming mega_dimensions is a struct containing the fields for each dimension
+
+% List of dimensions to plot with full names
+dimensions = {'Stress', 'Rumination', 'Scenario Anxiety', 'Physical Tension'};
+dimension_fields = {'stress', 'rumination', 'scenario_anxiety', 'physical_tension'};
+num_days = 10; % Number of days of recording
+
+% Assuming there are 60 time points representing one hour, calculate the number of points that represent 20 minutes
+points_in_20_min = round(60 * (20/60)); % Adjust this calculation if the time points represent a different total duration
+time = 1:points_in_20_min; % New time variable for up to 20 minutes
+
+% Loop over each dimension
+for d = 1:length(dimensions)
+    figure; % Create a new figure for each dimension
+    sgtitle([dimensions{d}]); % Super title for the figure with full name
+    
+    % Loop over each day to create subplots
+    for day = 1:num_days
+        subplot(4, 4, day); % 4x5 grid of subplots for each day
+        plot(time, mega_dimensions.(dimension_fields{d})(day, 1:points_in_20_min), '-', 'LineWidth', 1); % Plotting with a continuous line up to 20 minutes
+        
+        % Set titles and labels for each subplot
+        title(['Day ', num2str(day)]);
+        xlabel('Time (minutes)'); % Updated label to indicate minutes
+        ylabel(dimensions{d}); % Use the full name for the y-axis label
+        
+        % Optionally, set limits for y-axis if needed
+        % ylim([min_value max_value]); % Replace with actual limits
+        
+        % Optionally, set the x-axis to represent 20 minutes if time points are not 1:1 with minutes
+        xlim([1 points_in_20_min]);
+    end
+    
+    % Adjust layout to prevent subplot labels/titles from overlapping
+    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0, 1, 1]); % Full screen for clarity
+end
+
