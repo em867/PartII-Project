@@ -1,0 +1,296 @@
+% Extracting stress and rumination data
+stress_data = mega_dimensions.stress;
+rumination_data = mega_dimensions.rumination;
+
+% Get the number of days
+num_days = size(stress_data, 1);
+
+% Initialize variables to store vectorized data for all days
+all_stress_vector = [];
+all_rumination_vector = [];
+
+% Loop over each day
+for day = 1:num_days
+    % Vectorize data for the current day
+    stress_vector_day = stress_data(day, :)';
+    rumination_vector_day = rumination_data(day, :)';
+
+    % Concatenate vectorized data for the current day with previous days
+    all_stress_vector = [all_stress_vector, stress_vector_day];
+    all_rumination_vector = [all_rumination_vector, rumination_vector_day];
+end
+
+% Create scatter plot with all vectorized data
+figure;
+scatter(all_stress_vector, all_rumination_vector, 'Marker', '.');
+
+% Add labels and title
+xlabel('Stress');
+ylabel('Rumination');
+title('Scatter Plot of Stress vs. Rumination for All Days');
+
+
+
+
+
+
+
+% Extracting stress and physical_tension data
+stress_data = mega_dimensions.stress;
+physical_tension_data = mega_dimensions.physical_tension;
+
+% Get the number of days
+num_days = size(stress_data, 1);
+
+% Initialize variables to store vectorized data for all days
+all_stress_vector = [];
+all_physical_tension_vector = [];
+
+% Loop over each day
+for day = 1:num_days
+    % Vectorize data for the current day
+    stress_vector_day = stress_data(day, :)';
+    physical_tension_vector_day = physical_tension_data(day, :)';
+
+    % Concatenate vectorized data for the current day with previous days
+    all_stress_vector = [all_stress_vector, stress_vector_day];
+    all_physical_tension_vector = [all_physical_tension_vector, physical_tension_vector_day];
+end
+
+% Create scatter plot with all vectorized data
+figure;
+scatter(all_stress_vector, all_physical_tension_vector, 'Marker', '.');
+
+% Add labels and title
+xlabel('Stress');
+ylabel('physical_tension');
+title('Scatter Plot of Stress vs. Physical Tension for All Days');
+
+
+
+
+
+
+
+% Extracting stress and scenario_anxiety data
+stress_data = mega_dimensions.stress;
+scenario_anxiety_data = mega_dimensions.scenario_anxiety;
+
+% Get the number of days
+num_days = size(stress_data, 1);
+
+% Initialize variables to store vectorized data for all days
+all_stress_vector = [];
+all_scenario_anxiety_vector = [];
+
+% Loop over each day
+for day = 1:num_days
+    % Vectorize data for the current day
+    stress_vector_day = stress_data(day, :)';
+    scenario_anxiety_vector_day = scenario_anxiety_data(day, :)';
+
+    % Concatenate vectorized data for the current day with previous days
+    all_stress_vector = [all_stress_vector, stress_vector_day];
+    all_scenario_anxiety_vector = [all_scenario_anxiety_vector, scenario_anxiety_vector_day];
+end
+
+% Create scatter plot with all vectorized data
+figure;
+scatter(all_stress_vector, all_scenario_anxiety_vector, 'Marker', '.');
+
+% Add labels and title
+xlabel('Stress');
+ylabel('scenario_anxiety');
+title('Scatter Plot of Stress vs. Scenario Anxiety for All Days');
+
+
+
+
+
+
+
+
+
+
+
+% Extracting stress and rumination data
+stress_data = mega_dimensions.stress;
+rumination_data = mega_dimensions.rumination;
+
+% Get the number of days
+num_days = size(stress_data, 1);
+
+% Initialize variables to store vectorized data for all days
+all_stress_vector = [];
+all_rumination_vector = [];
+
+% Loop over each day
+for day = 1:num_days
+    % Vectorize data for the current day
+    stress_vector_day = stress_data(day, :)';
+    rumination_vector_day = rumination_data(day, :)';
+
+    % Concatenate vectorized data for the current day with previous days
+    all_stress_vector = [all_stress_vector; stress_vector_day]; % Changed to vertical concatenation
+    all_rumination_vector = [all_rumination_vector; rumination_vector_day]; % Changed to vertical concatenation
+end
+
+% Create scatter plot with all vectorized data
+figure;
+scatter(all_stress_vector, all_rumination_vector, 'Marker', '.');
+
+% Fit a linear regression line to the data
+coefficients = polyfit(all_stress_vector, all_rumination_vector, 1);  % Fit linear polynomial
+fittedX = linspace(min(all_stress_vector), max(all_stress_vector), 200);  % Generate X values for line
+fittedY = polyval(coefficients, fittedX);  % Evaluate polynomial
+
+% Add the line of best fit
+hold on;
+plot(fittedX, fittedY, 'r-', 'LineWidth', 2);  % Plot with a red line
+hold off;
+
+% Add labels and title
+xlabel('Stress');
+ylabel('Rumination');
+title('Scatter Plot of Stress vs. Rumination for All Days');
+
+
+
+
+
+
+
+
+% Assuming mega_dimensions is a struct with fields including stress, physical_tension, scenario_anxiety, and rumination
+
+% Get the number of days
+num_days = size(mega_dimensions.stress, 1);
+
+% Define the fields to plot against stress
+fields = {'physical_tension', 'scenario_anxiety', 'rumination'};
+field_names = {'Physical Tension', 'Scenario Anxiety', 'Rumination'}; % Names for titles
+
+% Setup for subplots
+figure;
+num_vars = numel(fields);  % Number of variables to plot
+num_per_row = 2;  % Number of plots per row for a 2x2 layout
+
+% Loop through each specified field
+for i = 1:num_vars
+    % Initialize vectors to store vectorized data for all days
+    all_stress_vector = [];
+    all_variable_vector = [];
+
+    % Extract data for current variable
+    current_var_data = mega_dimensions.(fields{i});
+
+    % Loop over each day to vectorize data
+    for day = 1:num_days
+        % Vectorize stress and current variable data for the current day
+        stress_vector_day = mega_dimensions.stress(day, :)';
+        variable_vector_day = current_var_data(day, :)';
+
+        % Concatenate vectorized data for the current day with previous days
+        all_stress_vector = [all_stress_vector; stress_vector_day];
+        all_variable_vector = [all_variable_vector; variable_vector_day];
+    end
+
+    % Create scatter plot for the current variable
+    subplot(num_per_row, num_per_row, i);  % Position subplot
+    scatter(all_stress_vector, all_variable_vector, 'Marker', '.');
+
+    % Fit a linear regression line to the data
+    coefficients = polyfit(all_stress_vector, all_variable_vector, 1);
+    fittedX = linspace(min(all_stress_vector), max(all_stress_vector), 200);
+    fittedY = polyval(coefficients, fittedX);
+
+    % Add the line of best fit
+    hold on;
+    plot(fittedX, fittedY, 'r-', 'LineWidth', 2);
+    hold off;
+
+    % Add labels and title
+    xlabel('Stress Level');
+    ylabel([field_names{i} ' Level']);  % Use more descriptive axis labels
+    title(['Stress vs. ' field_names{i}]);  % Use field names for titles
+end
+
+% Adjust figure spacing to avoid overlap
+set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0, 1, 1]);  % Make figure full screen for clarity
+
+% Add extra subplot to make a 2x2 grid complete
+subplot(num_per_row, num_per_row, 4);  % Position in the last grid space
+axis off;  % Turn off the axis
+title('');  % Optional: Add a title if needed
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% Assuming mega_dimensions is a struct with fields including stress, physical_tension, scenario_anxiety, and rumination
+
+% Get the number of days
+num_days = size(mega_dimensions.stress, 1);
+
+% Define the fields to plot against stress
+fields = {'physical_tension', 'scenario_anxiety', 'rumination'};
+field_names = {'Physical Tension', 'Scenario Anxiety', 'Rumination'}; % Names for titles
+
+% Setup for subplots
+figure;
+num_vars = numel(fields);  % Number of variables to plot
+num_per_row = 2;  % Number of plots per row for a 2x2 layout
+
+% Loop through each specified field
+for i = 1:num_vars
+    % Initialize vectors to store vectorized data for all days
+    all_stress_vector = [];
+    all_variable_vector = [];
+
+    % Extract data for current variable
+    current_var_data = mega_dimensions.(fields{i});
+
+    % Loop over each day to vectorize data
+    for day = 1:num_days
+        % Vectorize stress and current variable data for the current day
+        stress_vector_day = mega_dimensions.stress(day, :)';
+        variable_vector_day = current_var_data(day, :)';
+
+        % Concatenate vectorized data for the current day with previous days
+        all_stress_vector = [all_stress_vector; stress_vector_day];
+        all_variable_vector = [all_variable_vector; variable_vector_day];
+    end
+
+    % Create scatter plot for the current variable
+    subplot(num_per_row, num_per_row, i);  % Position subplot
+    scatter(all_stress_vector, all_variable_vector, 'Marker', '.');
+
+    % Fit a linear regression line to the data
+    coefficients = polyfit(all_stress_vector, all_variable_vector, 1);
+    fittedX = linspace(min(all_stress_vector), max(all_stress_vector), 200);
+    fittedY = polyval(coefficients, fittedX);
+
+
+    % Add labels and title
+    xlabel('Stress Level');
+    ylabel([field_names{i} ' Level']);  % Use more descriptive axis labels
+    title(['Stress vs. ' field_names{i}]);  % Use field names for titles
+end
+
+% Adjust figure spacing to avoid overlap
+set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0, 1, 1]);  % Make figure full screen for clarity
+
+% Add extra subplot to make a 2x2 grid complete
+subplot(num_per_row, num_per_row, 4);  % Position in the last grid space
+axis off;  % Turn off the axis
+title('');  % Optional: Add a title if needed
