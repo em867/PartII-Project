@@ -1,0 +1,211 @@
+
+% rumination WILCOXON TEST (ALL VALUES)
+
+
+
+% Extract all data for the rumination dimension
+rumination_data = mega_dimensions.rumination;
+
+% Extract the first 30 columns (first half) for rumination_breathing
+rumination_breathing = rumination_data(:, 1:30);
+
+% Extract the last 30 columns (second half) for rumination_bs
+rumination_bs = rumination_data(:, 31:end);
+
+% Perform Wilcoxon signed-rank test across all days
+[p, h, stats] = signrank(rumination_breathing(:), rumination_bs(:));
+
+% Store results in a structure
+wilcoxon_results.rumination = struct(...
+    'p_value', p, ...
+    'H0_rejection', h, ...
+    'test_statistic', stats.zval, ...
+    'signed_rank', stats.signedrank);  % 'rank_sum' is not an output of signrank
+
+% Display the results
+fprintf('Wilcoxon signed-rank test:\n');
+fprintf('   p-value: %.6f\n', p);
+fprintf('   H0 rejection: %d\n', h);
+fprintf('   Test statistic (z-value): %.6f\n', stats.zval);
+fprintf('   Signed rank: %d\n', stats.signedrank);  % This line changed from 'rank_sum' to 'signed_rank'
+
+
+% GETTING WILCOXON EFFECT SIZE (r) for rumination %
+
+% Calculate the test statistic
+Z = stats.zval;
+
+% Calculate the number of observations effectively used in the test
+non_zero_pairs = rumination_breathing ~= rumination_bs;
+N_effective = sum(non_zero_pairs, 'all');  % Sum over all dimensions to get total number of non-zero differences
+
+% Calculate the effect size
+effect_size = Z / sqrt(N_effective);  % Use N_effective instead of N
+
+% Store the corrected effect size in the structure
+all_dims_effect_sizes.rumination = effect_size;
+
+% Display the corrected effect size
+fprintf('Effect size (r): %.6f\n', effect_size);
+
+
+
+
+
+
+% DOING LINE PLOTS FOR EFFECT SIZES EACH DAY INDIVIDUALLY %
+
+
+
+
+% Define num_days based on the size of mega_dimensions.rumination
+num_days = size(mega_dimensions.rumination, 1);
+
+% Initialize structures to store daily values
+daily_z_val.rumination = zeros(num_days, 1);
+daily_w_val.rumination = zeros(num_days, 1);
+daily_effect_sizes_rumination = struct();
+
+for day = 1:num_days
+    % Extract data for the current day
+    day_data = mega_dimensions.rumination(day, :);
+
+    % Perform Wilcoxon signed-rank test for the current day
+    [p, ~, stats] = signrank(day_data(:, 1:30), day_data(:, 31:60)); % It compares the first half of the day's data against the second half
+
+    % Extract the Z value from the test statistics
+    Z = stats.zval;
+
+    % Store the Z value in the daily_z_val structure
+    daily_z_val.rumination(day) = Z;
+
+    % Extract the W value (signed rank sum) from the test statistics
+    W = stats.signedrank;
+
+    % Store the W score in the daily_w_val structure
+    daily_w_val.rumination(day) = W;
+
+    % Calculate the number of observations that were not tied or zero
+    non_zero_pairs = day_data(:, 1:30) ~= day_data(:, 31:60);
+    N_effective = sum(non_zero_pairs); % Number of non-zero, non-tie pairs
+
+    % Calculate the effect size for the current day using the formula
+    effect_size = Z / sqrt(N_effective);
+
+    % Store effect sizes in the original structure
+    daily_effect_sizes_rumination(day).effect_size = effect_size;
+
+    % Display the effect size for the current day
+    fprintf('Day %d: Z=%.2f, W=%.2f, Effect size (r): %.6f\n', day, Z, W, effect_size);
+end
+
+% Visualize the effect sizes in a line plot
+effect_sizes = [daily_effect_sizes_rumination.effect_size]; % Extract effect sizes
+plot(effect_sizes, '-o');
+xlabel('DAY');
+ylabel('EFFECT SIZE (r)');
+title('Rumination: Daily Effect Sizes');
+
+
+
+
+% BOX PLOT FOR MEGA DIMS rumination %
+
+
+
+% Define the number of days and the number of epochs per day
+num_days_rumination = size(mega_dimensions.rumination, 1);
+num_epochs_per_day_rumination = size(mega_dimensions.rumination, 2);
+
+% Extract the first half and second half of the y values for the "rumination" dimension
+first_half_rumination = mega_dimensions.rumination(:, 1:num_epochs_per_day_rumination/2);
+second_half_rumination = mega_dimensions.rumination(:, num_epochs_per_day_rumination/2+1:end);
+
+% Combine the data for boxplot
+combined_data_rumination = [first_half_rumination(:), second_half_rumination(:)];
+
+% Plot boxplot for comparison
+figure;
+boxplot(combined_data_rumination, 'Labels', {'Breathing', 'Body Scanning'});
+xlabel('MEDITATION TYPE');
+ylabel('SELF-REPORTED RUMINATION');
+title('Rumination by Meditation Type');
+
+
+
+
+
+
+% COMPARING MEANS PLOT (rumination ONLY) %
+
+
+% Calculate mean values for each day of the first experimental condition
+mean_breathing_rumination = mean(mega_dimensions.rumination(:, 1:30), 2);
+
+% Calculate mean values for each day of the second experimental condition
+mean_bs_rumination = mean(mega_dimensions.rumination(:, 31:60), 2);
+
+% Plotting the paired means with different colors and circles for each experimental condition
+figure;
+hold on;
+for i = 1:length(mean_breathing_rumination)
+    plot([1, 2], [mean_breathing_rumination(i), mean_bs_rumination(i)], '-o', 'Color', [0.5, 0.5, 0.5]); % Line in grey
+    plot(1, mean_breathing_rumination(i), 'ro', 'MarkerSize', 8); % Circles for experimental condition 1 in red
+    plot(2, mean_bs_rumination(i), 'bo', 'MarkerSize', 8); % Circles for experimental condition 2 in blue
+end
+
+% Customize the plot
+xlabel('MEDITATION TYPE');
+ylabel('MEAN VALUES');
+title('Rumination: Paired Mean Values by Meditation Type');
+xticks([1, 2]);
+xticklabels({'Breathing', 'Body Scanning'});
+grid on;
+
+% Adjusting x-axis limits to position points closer to the sides
+x_margin = 0.1; % Set the desired margin
+xlim([1 - x_margin, 2 + x_margin]);
+
+
+
+
+
+
+
+% VIOLIN PLOT INSIDE OF BOXPLOT RUMINATION %
+
+
+% Define the number of days and the number of epochs per day
+num_days_rumination = size(mega_dimensions.rumination, 1);
+num_epochs_per_day_rumination = size(mega_dimensions.rumination, 2);
+
+% Extract the first half and second half of the y values for the "rumination" dimension
+first_half_rumination = mega_dimensions.rumination(:, 1:num_epochs_per_day_rumination/2);
+second_half_rumination = mega_dimensions.rumination(:, num_epochs_per_day_rumination/2+1:end);
+
+% Combine the data for violin plot
+combined_data_rumination = [first_half_rumination(:), second_half_rumination(:)];
+
+% Plot violin plot
+figure;
+violin(combined_data_rumination, 'xlabel',{'Breathing', 'Body Scanning'}, 'facecolor', [1 0.5 0.5], 'edgecolor', [0.7 0 0]);
+xlabel('MEDITATION TYPE');
+ylabel('SELF-REPORTED RUMINATION');
+title('Rumination by Meditation Type');
+
+% Hold on to the current plot
+hold on;
+
+% Plot box plots
+boxplot(combined_data_rumination, 'Labels', {'Breathing', 'Body Scanning'}, ...
+    'Positions', [1, 2], 'Widths', 0.2, 'Color', [0.7 0 0], 'BoxStyle', 'outline');
+
+% Add grid lines
+grid on;
+
+
+
+
+
+
+
