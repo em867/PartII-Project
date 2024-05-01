@@ -1,0 +1,105 @@
+% Initialize overall_mean_values structure
+overall_mean_values = struct();
+
+% Loop over each field in mega_dimensions
+fields = fieldnames(mega_dimensions);
+for i = 1:numel(fields)
+    field_name = fields{i};
+    
+    % Get the data for the current field
+    data = mega_dimensions.(field_name);
+    
+    % Select the first 30 columns and compute mean across all rows
+    mean_first_30 = mean(data(:, 1:30), 'all');
+    
+    % Select the last 30 columns and compute mean across all rows
+    mean_last_30 = mean(data(:, end-29:end), 'all');
+    
+    % Store the means in the overall_mean_values structure
+    overall_mean_values.(field_name).first_30_mean = mean_first_30;
+    overall_mean_values.(field_name).last_30_mean = mean_last_30;
+end
+
+
+
+
+
+
+
+
+
+% CALCULATING MEDIANS %
+
+
+
+% Initialize overall_median_values structure
+overall_median_values = struct();
+
+% Loop over each field in mega_dimensions
+fields = fieldnames(mega_dimensions);
+for i = 1:numel(fields)
+    field_name = fields{i};
+    
+    % Get the data for the current field
+    data = mega_dimensions.(field_name);
+    
+    % Select the first 30 columns and compute median across all rows
+    median_first_30 = median(data(:, 1:30), 'all');
+    
+    % Select the last 30 columns and compute median across all rows
+    median_last_30 = median(data(:, end-29:end), 'all');
+    
+    % Store the medians in the overall_median_values structure
+    overall_median_values.(field_name).first_30_median = median_first_30;
+    overall_median_values.(field_name).last_30_median = median_last_30;
+end
+
+
+
+
+% PAIRED medianS PLOT %
+
+% Define the dimensions of interest
+dimensions = {'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+dimension_titles = {'Physical Tension', 'Scenario Anxiety', 'Rumination', 'Stress'};
+
+% Create a new figure
+figure;
+
+% Loop through each dimension
+for dim_idx = 1:numel(dimensions)
+    % Calculate median values for each day of the first experimental condition
+    median_breathing = median(mega_dimensions.(dimensions{dim_idx})(:, 1:30), 2);
+
+    % Calculate median values for each day of the second experimental condition
+    median_bs = median(mega_dimensions.(dimensions{dim_idx})(:, 31:60), 2);
+
+    % Create subplot for the current dimension
+    subplot(2, 2, dim_idx);
+    hold on;
+    for i = 1:length(median_breathing)
+        plot([1, 2], [median_breathing(i), median_bs(i)], '-o', 'Color', [0.5, 0.5, 0.5]); % Line in grey
+        plot(1, median_breathing(i), 'ro', 'MarkerSize', 8); % Circles for experimental condition 1 in red
+        plot(2, median_bs(i), 'bo', 'MarkerSize', 8); % Circles for experimental condition 2 in blue
+    end
+
+    % Customize the plot
+    xlabel('MEDITATION TYPE');
+    ylabel('MEDIAN VALUES');
+    title(dimension_titles{dim_idx}); % Use dimension title from dimension_titles
+    xticks([1, 2]);
+    xticklabels({'Breathing', 'Body Scanning'});
+    grid on;
+
+    % Adjusting x-axis limits to position points closer to the sides
+    x_margin = 0.1; % Set the desired margin
+    xlim([1 - x_margin, 2 + x_margin]);
+end
+
+% Adjust the layout of the subplots
+sgtitle('Paired Median Values by Meditation Type');
+
+
+
+
+
