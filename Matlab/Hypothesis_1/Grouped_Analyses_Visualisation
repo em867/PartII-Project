@@ -1,0 +1,407 @@
+
+% BOX PLOTS OF ALL DIMS TOGETHER %
+
+% Initialize figure
+figure;
+
+% Define dimensions of interest along with their names
+dimensions_of_interest = {'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+dimension_names = {'Physical Tension', 'Scenario Anxiety', 'Rumination', 'Stress'};
+
+% Loop over each dimension of interest
+for dim_idx = 1:numel(dimensions_of_interest)
+    dimension_name = dimensions_of_interest{dim_idx};
+    plot_title = dimension_names{dim_idx};
+    
+    % Extract the dimension data from mega_dimensions
+    dimension_data = mega_dimensions.(dimension_name);
+    
+    % Calculate the number of days
+    num_days = size(dimension_data, 1);
+
+    % Initialize arrays to store data for first and second halves
+    first_half_data = zeros(num_days, 30);
+    second_half_data = zeros(num_days, 30);
+
+    % Extract data for first and second halves
+    for i = 1:num_days
+        data_day = dimension_data(i, :);
+        first_half_data(i, :) = data_day(1:30);
+        second_half_data(i, :) = data_day(31:end);
+    end
+
+    % Plot boxplots for first and second halves in a 2x2 grid
+    subplot(2, 2, dim_idx);
+    boxplot([first_half_data(:), second_half_data(:)], 'Labels', {'Breathing', 'Body Scanning'});
+    xlabel('MEDITATION TYPE');
+    ylabel('DIMENSION VALUE');
+    title(plot_title);
+end
+
+
+
+
+
+
+% LINE PLOTS OF EFFECT SIZES ALTOGETHER
+
+% Extract effect sizes for each dimension
+effect_sizes_physical_tension = [daily_effect_sizes_physical_tension.effect_size];
+effect_sizes_rumination = [daily_effect_sizes_rumination.effect_size];
+effect_sizes_scenario_anxiety = [daily_effect_sizes_scenario_anxiety.effect_size];
+effect_sizes_stress = [daily_effect_sizes_stress.effect_size];
+
+% Create a new figure
+figure;
+
+% Plot for each dimension
+plotEffectSizes(effect_sizes_physical_tension, 1, 'Physical Tension');
+plotEffectSizes(effect_sizes_rumination, 2, 'Rumination');
+plotEffectSizes(effect_sizes_scenario_anxiety, 3, 'Scenario Anxiety');
+plotEffectSizes(effect_sizes_stress, 4, 'Stress');
+
+% Adjust plot layout
+sgtitle('Daily Effect (r) Size Per Dimension');
+
+% Define function for selecting color based on effect size
+function color = getColor(effect_size)
+    if abs(effect_size) > 0.5
+        color = 'r'; % Red for large effect sizes
+    elseif abs(effect_size) >= 0.3
+        color = 'b'; % Blue for medium effect sizes
+    elseif abs(effect_size) >= 0.1
+        color = 'g'; % Green for small effect sizes
+    else
+        color = [0.5, 0.5, 0.5]; % Grey for very small effect sizes
+    end
+end
+
+% Function to plot each dimension's effect sizes with conditional colors
+function plotEffectSizes(effect_sizes, subplot_index, title_text)
+    subplot(2, 2, subplot_index);
+    hold on;
+    % Plot grey lines connecting the points
+    plot(1:length(effect_sizes), effect_sizes, 'Color', [0.7, 0.7, 0.7], 'LineStyle', '-', 'Marker', 'none');
+    % Plot colored markers as filled circles
+    for i = 1:length(effect_sizes)
+        % Use the getColor function to determine the color based on effect size
+        color = getColor(effect_sizes(i));
+        % Plot the points as filled circles with a slightly larger size
+        plot(i, effect_sizes(i), 'o', 'MarkerSize', 5, 'MarkerFaceColor', color, 'MarkerEdgeColor', color);
+    end
+    xlabel('DAY');
+    ylabel('EFFECT SIZE (r)');
+    title(title_text);
+    grid on;
+    hold off;
+end
+
+
+
+
+
+
+
+
+
+
+
+% EFFECT SIZE VARIANCE PLOT %
+
+% pt%
+% Extract effect sizes for physical tension
+effect_sizes_pt = [daily_effect_sizes_physical_tension.effect_size];
+
+% Calculate the variance of the effect sizes for each day
+variances_pt = var(effect_sizes_pt);
+
+
+% stress %
+% Extract effect sizes for physical tension
+effect_sizes_stress = [daily_effect_sizes_stress.effect_size];
+
+% Calculate the variance of the effect sizes for each day
+variances_stress = var(effect_sizes_stress);
+
+% scenario anxiety %
+% Extract effect sizes for physical tension
+effect_sizes_sa = [daily_effect_sizes_scenario_anxiety.effect_size];
+
+% Calculate the variance of the effect sizes for each day
+variances_sa = var(effect_sizes_sa);
+
+
+% rumination %
+% Extract effect sizes for physical tension
+effect_sizes_rumination = [daily_effect_sizes_rumination.effect_size];
+
+% Calculate the variance of the effect sizes for each day
+variances_rumination = var(effect_sizes_rumination);
+
+
+
+% Create a structure to store variances for each dimension
+variance_all_dims = struct('physical_tension', variances_pt, ...
+                            'stress', variances_stress, ...
+                            'scenario_anxiety', variances_sa, ...
+                            'rumination', variances_rumination);
+
+% Making the plot %
+% Extract dimension names and variances from the structure
+dimension_names = fieldnames(variance_all_dims);
+variances = zeros(1, numel(dimension_names));
+for i = 1:numel(dimension_names)
+    variances(i) = variance_all_dims.(dimension_names{i});
+end
+
+% Define colors for each dimension
+colors = lines(numel(dimension_names));
+
+% Plot the variances for each dimension
+figure;
+hold on;
+for i = 1:numel(dimension_names)
+    scatter(i, variances(i), 100, colors(i, :), 'filled', 'DisplayName', dimension_names{i});
+end
+xlabel('DIMENSION');
+ylabel('VARIANCE');
+title('Dimensions: Effect Size (r) Variance');
+xticks(1:numel(dimension_names));
+xticklabels({'Physical Tension', 'Stress', 'Scenario Anxiety', 'Rumination'});
+legend('PHYSICAL TENSION', 'STRESS', 'SCENARIO ANXIETY', 'RUMINATION', 'Location', 'northeastoutside');
+grid on;
+
+% Adjust x-axis limits to add padding
+x_margin = 0.1; % Set the desired margin
+xlim([0.5 - x_margin, numel(dimension_names) + 0.5 + x_margin]);
+
+
+
+
+
+
+% EFFECT SIZE PLOT (INDIVIDUALLY) %
+
+% Making the plot %
+% Extract dimension names and effect sizes from the structure
+dimension_names = fieldnames(all_dims_effect_sizes);
+effect_sizes = zeros(1, numel(dimension_names));
+for i = 1:numel(dimension_names)
+    effect_sizes(i) = all_dims_effect_sizes.(dimension_names{i});
+end
+
+% Define colors for each dimension
+colors = lines(numel(dimension_names));
+
+% Plot the effect sizes for each dimension
+figure;
+hold on;
+for i = 1:numel(dimension_names)
+    scatter(i, effect_sizes(i), 100, colors(i, :), 'filled', 'DisplayName', ['Dimension: ' dimension_names{i}]);
+end
+xlabel('DIMENSION');
+ylabel('EFFECT SIZE (r)');
+title('Scatter plot: Effect Sizes (r) per Dimension');
+xticks(1:numel(dimension_names));
+xticklabels({'Physical Tension', 'Rumination', 'Scenario Anxiety', 'Stress'}); % Change dimension names here
+legend('PHYSICAL TENSION', 'RUMINATION', 'SCENARIO ANXIETY', 'STRESS', 'Location', 'northeastoutside');
+grid on;
+
+% Adjust x-axis limits to add padding
+x_margin = 0.1; % Set the desired margin
+xlim([0.5 - x_margin, numel(dimension_names) + 0.5 + x_margin]);
+
+
+
+
+
+
+% MODIFIED EFFECT SIZE PLOT %
+
+
+
+% Making the plot %
+% Extract dimension names and effect sizes from the structure
+dimension_names = fieldnames(all_dims_effect_sizes);
+effect_sizes = zeros(1, numel(dimension_names));
+for i = 1:numel(dimension_names)
+    effect_sizes(i) = all_dims_effect_sizes.(dimension_names{i});
+end
+
+% Define colors for each dimension based on effect size
+colors = zeros(numel(dimension_names), 3); % Initialize color matrix
+
+for i = 1:numel(effect_sizes)
+    if abs(effect_sizes(i)) > 0.5
+        colors(i, :) = [1, 0, 0]; % Red for large effect sizes (> 0.5 or < -0.5)
+    elseif abs(effect_sizes(i)) >= 0.3
+        colors(i, :) = [0, 0, 1]; % Blue for medium effect sizes (0.3 to 0.5 and -0.3 to -0.5)
+    elseif abs(effect_sizes(i)) >= 0.1
+        colors(i, :) = [0, 1, 0]; % Green for small effect sizes (0.1 to 0.3 and -0.1 to -0.3)
+    else
+        colors(i, :) = [0.5, 0.5, 0.5]; % Grey for very small or insignificant effect sizes
+    end
+end
+
+% Plot the effect sizes for each dimension
+figure;
+hold on;
+for i = 1:numel(dimension_names)
+    scatter(i, effect_sizes(i), 100, colors(i, :), 'filled', 'DisplayName', dimension_names{i});
+end
+xlabel('DIMENSION');
+ylabel('EFFECT SIZE (r)');
+title('Scatter plot: Effect Sizes (r) per Dimension');
+xticks(1:numel(dimension_names));
+xticklabels({'Physical Tension', 'Rumination', 'Scenario Anxiety', 'Stress'}); % Change dimension names here
+grid on;
+
+% Adjust x-axis limits to add padding
+x_margin = 0.1; % Set the desired margin
+xlim([0.5 - x_margin, numel(dimension_names) + 0.5 + x_margin]);
+
+hold off; % Make sure to turn hold off after plotting
+
+
+
+
+
+
+% PAIRED MEANS PLOT %
+
+% Define the dimensions of interest
+dimensions = {'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+dimension_titles = {'Physical Tension', 'Scenario Anxiety', 'Rumination', 'Stress'};
+
+% Create a new figure
+figure;
+
+% Loop through each dimension
+for dim_idx = 1:numel(dimensions)
+    % Calculate mean values for each day of the first experimental condition
+    mean_breathing = mean(mega_dimensions.(dimensions{dim_idx})(:, 1:30), 2);
+
+    % Calculate mean values for each day of the second experimental condition
+    mean_bs = mean(mega_dimensions.(dimensions{dim_idx})(:, 31:60), 2);
+
+    % Create subplot for the current dimension
+    subplot(2, 2, dim_idx);
+    hold on;
+    for i = 1:length(mean_breathing)
+        plot([1, 2], [mean_breathing(i), mean_bs(i)], '-o', 'Color', [0.5, 0.5, 0.5]); % Line in grey
+        plot(1, mean_breathing(i), 'ro', 'MarkerSize', 8); % Circles for experimental condition 1 in red
+        plot(2, mean_bs(i), 'bo', 'MarkerSize', 8); % Circles for experimental condition 2 in blue
+    end
+
+    % Customize the plot
+    xlabel('MEDITATION TYPE');
+    ylabel('MEAN VALUES');
+    title(dimension_titles{dim_idx}); % Use dimension title from dimension_titles
+    xticks([1, 2]);
+    xticklabels({'Breathing', 'Body Scanning'});
+    grid on;
+
+    % Adjusting x-axis limits to position points closer to the sides
+    x_margin = 0.1; % Set the desired margin
+    xlim([1 - x_margin, 2 + x_margin]);
+end
+
+% Adjust the layout of the subplots
+sgtitle('Paired Mean Values by Meditation Type');
+
+
+
+
+
+
+
+% PAIRED MEDIANS PLOT %
+
+% Define the dimensions of interest
+dimensions = {'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+dimension_titles = {'Physical Tension', 'Scenario Anxiety', 'Rumination', 'Stress'};
+
+% Create a new figure
+figure;
+
+% Loop through each dimension
+for dim_idx = 1:numel(dimensions)
+    % Calculate median values for each day of the first experimental condition
+    median_breathing = median(mega_dimensions.(dimensions{dim_idx})(:, 1:30), 2);
+
+    % Calculate median values for each day of the second experimental condition
+    median_bs = median(mega_dimensions.(dimensions{dim_idx})(:, 31:60), 2);
+
+    % Create subplot for the current dimension
+    subplot(2, 2, dim_idx);
+    hold on;
+    for i = 1:length(median_breathing)
+        plot([1, 2], [median_breathing(i), median_bs(i)], '-o', 'Color', [0.5, 0.5, 0.5]); % Line in grey
+        plot(1, median_breathing(i), 'ro', 'MarkerSize', 8); % Circles for experimental condition 1 in red
+        plot(2, median_bs(i), 'bo', 'MarkerSize', 8); % Circles for experimental condition 2 in blue
+    end
+
+    % Customize the plot
+    xlabel('MEDITATION TYPE');
+    ylabel('MEDIAN VALUES');
+    title(dimension_titles{dim_idx}); % Use dimension title from dimension_titles
+    xticks([1, 2]);
+    xticklabels({'Breathing', 'Body Scanning'});
+    grid on;
+
+    % Adjusting x-axis limits to position points closer to the sides
+    x_margin = 0.1; % Set the desired margin
+    xlim([1 - x_margin, 2 + x_margin]);
+end
+
+% Adjust the layout of the subplots
+sgtitle('Paired Median Values by Meditation Type');
+
+
+
+
+
+
+
+
+
+% VIOLIN BOXPLOTS FOR ALL DIMS %
+
+
+
+% Define the number of days and the number of epochs per day for each dimension
+dimensions = {'physical_tension', 'scenario_anxiety', 'rumination', 'stress'};
+dimension_names = {'Physical Tension', 'Scenario Anxiety', 'Rumination', 'Stress'};
+num_days = cellfun(@(dim) size(mega_dimensions.(dim), 1), dimensions);
+num_epochs_per_day = cellfun(@(dim) size(mega_dimensions.(dim), 2), dimensions);
+
+% Create a new figure
+figure;
+
+for i = 1:numel(dimensions)
+    % Extract the first half and second half of the y values for the current dimension
+    first_half = mega_dimensions.(dimensions{i})(:, 1:num_epochs_per_day(i)/2);
+    second_half = mega_dimensions.(dimensions{i})(:, num_epochs_per_day(i)/2+1:end);
+
+    % Combine the data for violin plot
+    combined_data = [first_half(:), second_half(:)];
+
+    % Create subplot for the current dimension
+    subplot(2, 2, i);
+    violin(combined_data, 'xlabel',{'Breathing', 'Body Scanning'}, 'facecolor', [1 0.5 0.5], 'edgecolor', [0.7 0 0]);
+    xlabel('MEDITATION TYPE');
+    ylabel(['SELF-REPORTED ', dimension_names{i}]);
+    title([dimension_names{i}]);
+
+    % Hold on to the current plot
+    hold on;
+
+    % Plot box plots
+    boxplot(combined_data, 'Labels', {'Breathing', 'Body Scanning'}, ...
+        'Positions', [1, 2], 'Widths', 0.2, 'Color', [0.7 0 0], 'BoxStyle', 'outline');
+
+    % Add grid lines
+    grid on;
+end
+
+
